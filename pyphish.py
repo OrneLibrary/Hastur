@@ -12,6 +12,7 @@ def main():
     parser.add_argument("-scope", help='specify the location of excel sheet with ips in scope',metavar='scope_absolute_path')
     parser.add_argument("-o","--output",help="output emails and passwords to two txt files (usernames.txt and passwords.txt) in local directory, default is to output to terminal", action="store_true")
 
+
     StatsParser=parser.add_argument_group("STATS ARGUMENTS")
     StatsParser.add_argument("-domain", help="return top N email domains, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
     StatsParser.add_argument("-ip", help="return top N remote IPs, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
@@ -53,8 +54,10 @@ def main():
 def return_output(complete_output):
     with open('emails.txt', 'w') as f_email, open('passwords.txt', 'w') as f_pass:
         for line in complete_output:
-            emails=str(line['email']).split("\'")[1]
-            passwords=str(line['password']).split("\'")[1]
+            emails=str(line['email']).split("\'")[1] #grab the emails 
+            passwords=str(line['password']).split("\'")[1] #grab the passwords
+
+            # Write the emails and passwords to the txt files 
             f_email.write(emails)
             f_email.write('\n')
             f_pass.write(passwords)
