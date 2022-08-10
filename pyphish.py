@@ -2,6 +2,8 @@ import pandas as pd
 import json
 from collections import Counter
 import argparse
+from csv import reader
+import csv
 
 def main():
     """
@@ -12,10 +14,9 @@ def main():
     parser.add_argument("-scope", help='specify the location of excel sheet with ips in scope',metavar='scope_absolute_path')
     parser.add_argument("-o","--output",help="output emails and passwords to two txt files (usernames.txt and passwords.txt) in local directory, default is to output to terminal", action="store_true")
 
-
     StatsParser=parser.add_argument_group("STATS ARGUMENTS")
-    StatsParser.add_argument("-domain", help="return top N email domains, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
-    StatsParser.add_argument("-ip", help="return top N remote IPs, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
+    StatsParser.add_argument("-domain", help="return top N email domains for users who enter payload, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
+    StatsParser.add_argument("-ip", help="return top N remote IPs for user who enter payload, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
 
     args=parser.parse_args()
     
@@ -70,8 +71,19 @@ def read_scope(input_scope):
 
 # Return the phishing results in a Pandas DataFrame 
 def read_phish(input_phish):
-    df = pd.read_csv(input_phish)
+    row_email=[]
+    row_message=[]
+    row_details=[]
+    with open(input_phish, 'r') as read_obj:
+        csv_reader = csv.DictReader(read_obj)
+        for row in csv_reader:
+            if row['message'] != 'Email Sent':
+                row_email.append(row['email'])
+                row_message.append(row['message'])
+                row_details.append(row['details'])
+    df = pd.DataFrame(list(zip(row_email,row_message,row_details)),columns =['email', 'message','details']).iloc[1: , :]
     return df.dropna(subset=['details'])
+    #return df
 
 # Return the credentials for users that are in scope 
 def return_in_scope(input_df,input_ip_list):
