@@ -28,4 +28,11 @@ STATS ARGUMENTS:
   -ip [N]               return top N remote IPs, default is 5
 ```
 
+## GoPhish Download Steps
+1. Navigate to GoPhish Server Dashboard and Click on Campaigns. 
+
+![Dashboard](https://raw.github.com/OrneLibrary/pyphish/main/images/dashboard.png)
+
+2. Select the appropriate Campaign. If completed select "Archived Campaigns". If incomplete, select "Active Campaigns."
+
 Created by: AJ Read 

@@ -29,9 +29,15 @@ def main():
         creds,full=return_in_scope(phish_df,ip_list)
         if (args.output):
             return_output(creds)
-        else: 
+        else:
+            print('Credentials: ')
+            print('-----------------------------------------')
             print('\n'.join(map(str,creds)))
+            print('-----------------------------------------')
+            print('Full output:')
+            print('-----------------------------------------')
             print('\n'.join(map(str,full)))
+            print('-----------------------------------------')
 
     # Print out the domains in GoPhish (stats)
     elif (args.domain):
@@ -49,7 +55,10 @@ def main():
         if (args.output):
             return_output(all)
         else: 
+            print('Credentials: ')
+            print('-----------------------------------------')
             print('\n'.join(map(str,all)))
+            print('-----------------------------------------')
 
 # Send usernames and emails to username.txt and passwords.txt within local directory 
 def return_output(complete_output):
