@@ -4,6 +4,8 @@ from collections import Counter
 import argparse
 from csv import reader
 import csv
+from dateutil import parser
+import numpy as np
 
 def main():
     """
@@ -15,8 +17,9 @@ def main():
     parser.add_argument("-o","--output",help="output emails and passwords to two txt files (usernames.txt and passwords.txt) in local directory, default is to output to terminal", action="store_true")
 
     StatsParser=parser.add_argument_group("STATS ARGUMENTS")
-    StatsParser.add_argument("-domain", help="return top N email domains for users who enter payload, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
-    StatsParser.add_argument("-ip", help="return top N remote IPs for user who enter payload, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
+    StatsParser.add_argument("-p","--ptp", help="return information for Pen Test Portal findings", action='store_true')
+    StatsParser.add_argument("-domain", help="return top N email domains for users who entered credentials, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
+    StatsParser.add_argument("-ip", help="return top N remote IPs for user who entered credentials, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
 
     args=parser.parse_args()
     
@@ -49,6 +52,19 @@ def main():
         ip_output=return_remote_ip(phish_df)
         print(ip_output[:args.ip]) #create capability to view a certain number (top 5, top 10, top 20)
 
+    # If the PTP stats are requested 
+    elif (args.ptp):
+        emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,expl,length_campaign=ptp_stats(phish_df)
+        print(f'Number of Emails Sent: {emails_sent}')
+        print(f'Number of Emails Delivered: {emails_delivered}')
+        print(f'Number of Unique Clicks: {unique_clicks}')
+        print(f'Click Rate (%): {round(rate*100, 2)}') 
+        print(f'Total Number of Clicks: {total_clicks}')
+        print(f'Time to First Click (HH:MM:SS): {time_to_first}')
+        print(f'Number of Exploited: {expl}')
+        print(f'Length of Campaign (HH:MM:SS): {length_campaign}')
+
+
     # Print out all credentials and output from CSV 
     else:
         all=return_allcreds(phish_df)
@@ -59,6 +75,40 @@ def main():
             print('-----------------------------------------')
             print('\n'.join(map(str,all)))
             print('-----------------------------------------')
+
+def ptp_stats(input_df):
+    emails_sent=0
+    emails_delivered=0
+    total_clicks=0
+    users_click=[]
+    unique_clicks=0
+    rate=0
+    expl=0
+    expl_users=[]
+    for row in input_df.itertuples():
+        if row.message == 'Campaign Created':
+            campaign_begin=parser.parse(row.time)
+        if row.message == 'Email Sent':
+            emails_sent=emails_sent+1
+            emails_delivered=emails_delivered+1
+        if row.message == 'Clicked Link':
+            if total_clicks==0:
+                first_click=parser.parse(row.time)
+            total_clicks=total_clicks+1
+            if row.email not in users_click:
+                unique_clicks=unique_clicks+1
+                users_click.append(row.email)
+        if row.message == 'Submitted Data':
+            if row.email not in expl_users:
+                expl=expl+1
+                expl_users.append(row.email)
+        last_time=parser.parse(row.time)
+    
+    rate=unique_clicks/emails_sent
+    time_to_first=first_click-campaign_begin
+    length_campaign=last_time-campaign_begin
+
+    return emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,expl,length_campaign
 
 # Send usernames and emails to username.txt and passwords.txt within local directory 
 def return_output(complete_output):
@@ -83,21 +133,32 @@ def read_phish(input_phish):
     row_email=[]
     row_message=[]
     row_details=[]
+    row_time=[]
     with open(input_phish, 'r') as read_obj:
         csv_reader = csv.DictReader(read_obj)
         for row in csv_reader:
-            if row['message'] != 'Email Sent':
+            '''
+            #if row['message'] != 'Email Sent':
                 row_email.append(row['email'])
+                row_time.append(row['time'])
                 row_message.append(row['message'])
                 row_details.append(row['details'])
-    df = pd.DataFrame(list(zip(row_email,row_message,row_details)),columns =['email', 'message','details']).iloc[1: , :]
-    return df.dropna(subset=['details'])
-    #return df
+            '''
+            row_email.append(row['email'])
+            row_time.append(row['time'])
+            row_message.append(row['message'])
+            row_details.append(row['details'])
+    #df = pd.DataFrame(list(zip(row_email,row_time,row_message,row_details)),columns =['email','time', 'message','details']).iloc[1: , :]
+    df = pd.DataFrame(list(zip(row_email,row_time,row_message,row_details)),columns =['email','time', 'message','details'])
+    #return df.dropna(subset=['details'])
+    df['details'].replace('', np.nan, inplace=True)
+    return df
 
 # Return the credentials for users that are in scope 
 def return_in_scope(input_df,input_ip_list):
     finalvalid_creds=[]
     finalvalid_full=[]
+    input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
         row_json=json.loads(row.details)
         if "email" in row_json['payload'] and "password" in row_json['payload']:
@@ -110,6 +171,7 @@ def return_in_scope(input_df,input_ip_list):
 # Return all domains from the GoPhish csv file 
 def return_domains(input_df):
     domains=[]
+    input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
         row_json=json.loads(row.details)
         if "email" in row_json['payload'] and "password" in row_json['payload']:
@@ -122,6 +184,7 @@ def return_domains(input_df):
 # Return all IP addresses from the GoPhish csv file 
 def return_remote_ip(input_df):
     remote_ip=[]
+    input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
         row_json=json.loads(row.details)
         remote_ip.append(row_json['browser']['address'])
@@ -133,6 +196,7 @@ def return_remote_ip(input_df):
 # Return all credentials in the GoPhish csv file, regardless of in scope or not 
 def return_allcreds(input_df):
     all_creds=[]
+    input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
         row_json=json.loads(row.details)
         if "email" in row_json['payload'] and "password" in row_json['payload']:
