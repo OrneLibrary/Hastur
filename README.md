@@ -31,8 +31,6 @@ STATS ARGUMENTS:
 ## GoPhish Download Steps
 1. Navigate to GoPhish Server Dashboard and Click on Campaigns. 
 
-![Dashboard](https://raw.githubusercontent.com/OrneLibrary/pyphish/main/images/dashboard.png)
-
 2. Select the appropriate Campaign. If completed select "Archived Campaigns". If incomplete, select "Active Campaigns."
 
 3. Click on "Stats" to far right of the Campaign. 
