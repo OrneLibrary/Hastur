@@ -30,11 +30,11 @@ def main():
         if (args.output):
             return_output(creds)
         else:
-            print('Credentials: ')
+            print('Credentials in Scope: ')
             print('-----------------------------------------')
             print('\n'.join(map(str,creds)))
             print('-----------------------------------------')
-            print('Full output:')
+            print('Full output in Scope:')
             print('-----------------------------------------')
             print('\n'.join(map(str,full)))
             print('-----------------------------------------')
