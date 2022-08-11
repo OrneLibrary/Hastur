@@ -31,8 +31,17 @@ STATS ARGUMENTS:
 ## GoPhish Download Steps
 1. Navigate to GoPhish Server Dashboard and Click on Campaigns. 
 
-![Dashboard](https://raw.github.com/OrneLibrary/pyphish/main/images/dashboard.png)
-
 2. Select the appropriate Campaign. If completed select "Archived Campaigns". If incomplete, select "Active Campaigns."
+
+3. Click on "Stats" to far right of the Campaign. 
+
+4. Click on "Export CSV" within the Campaign. 
+
+5. Click "Raw Events."
+
+6. Click "Open With" Sublime Text.
+
+7. Save the CSV in the desired working directory. 
+
 
 Created by: AJ Read 
