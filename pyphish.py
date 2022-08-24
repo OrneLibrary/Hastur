@@ -13,11 +13,11 @@ def main():
     """
     parser = argparse.ArgumentParser(description='pyphish - pull information from GoPhish and request stats or beautify output')
     parser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish',metavar='phish_absolute_path')
-    parser.add_argument("-scope", help='specify the location of excel sheet with ips in scope',metavar='scope_absolute_path')
+    parser.add_argument("-scope", help='specify the location of text file with IPs in scope',metavar='abs_path')
     parser.add_argument("-o","--output",help="output emails and passwords to two txt files (usernames.txt and passwords.txt) in local directory, default is to output to terminal", action="store_true")
 
     StatsParser=parser.add_argument_group("STATS ARGUMENTS")
-    StatsParser.add_argument("-p","--ptp", help="return information for Pen Test Portal findings", action='store_true')
+    StatsParser.add_argument("-p","--ptp", help="return information for PenTestPortal findings", action='store_true')
     StatsParser.add_argument("-domain", help="return top N email domains for users who entered credentials, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
     StatsParser.add_argument("-ip", help="return top N remote IPs for user who entered credentials, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
 
@@ -118,16 +118,15 @@ def return_output(complete_output):
             passwords=str(line['password']).split("\'")[1] #grab the passwords
 
             # Write the emails and passwords to the txt files 
-            f_email.write(emails)
-            f_email.write('\n')
-            f_pass.write(passwords)
-            f_pass.write('\n')
+            f_email.write(emails + '\n')
+            f_pass.write(passwords+'\n')
+
 
 # Return a list of IPs in scope for the assessment 
 def read_scope(input_scope):
-    ip_scope=pd.read_excel(input_scope)
+    ip_scope = pd.read_csv(input_scope, engine="python")
+    print(ip_scope)
     return ip_scope['IP'].tolist()
-
 # Return the phishing results in a Pandas DataFrame 
 def read_phish(input_phish):
     row_email=[]
@@ -137,20 +136,11 @@ def read_phish(input_phish):
     with open(input_phish, 'r') as read_obj:
         csv_reader = csv.DictReader(read_obj)
         for row in csv_reader:
-            '''
-            #if row['message'] != 'Email Sent':
-                row_email.append(row['email'])
-                row_time.append(row['time'])
-                row_message.append(row['message'])
-                row_details.append(row['details'])
-            '''
             row_email.append(row['email'])
             row_time.append(row['time'])
             row_message.append(row['message'])
             row_details.append(row['details'])
-    #df = pd.DataFrame(list(zip(row_email,row_time,row_message,row_details)),columns =['email','time', 'message','details']).iloc[1: , :]
     df = pd.DataFrame(list(zip(row_email,row_time,row_message,row_details)),columns =['email','time', 'message','details'])
-    #return df.dropna(subset=['details'])
     df['details'].replace('', np.nan, inplace=True)
     return df
 
