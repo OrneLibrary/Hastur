@@ -2,7 +2,6 @@ import pandas as pd
 import json
 from collections import Counter
 import argparse
-from csv import reader
 import csv
 from dateutil import parser
 import numpy as np
@@ -26,7 +25,6 @@ def main():
     StatsParser.add_argument("-io", "--ip_open",
                              help="return top N remote IPs for user who opened email, default is 5", type=int,
                              const=5, action='store', metavar='N', nargs='?')
-
 
     args=parser.parse_args()
     
@@ -53,13 +51,18 @@ def main():
     elif (args.domain_creds):
         d=return_domains(phish_df)
         print(d[:args.domain_creds])
-    # Print out all IPs in GoPhish (stats)
+
+    # Print out all IPs in GoPhish that entered credentials
     elif (args.ip_creds):
         ip_output,_,_=return_remote_ip(phish_df)
         print(ip_output[:args.ip_creds])
+
+    # Print out all IPs in GoPhish that clicked on the link
     elif (args.ip_click):
         _,_,ip_output=return_remote_ip(phish_df)
         print(ip_output[:args.ip_click])
+
+    # Print out all IPs in GoPhish that opened the email
     elif (args.ip_open):
         _,ip_output,_=return_remote_ip(phish_df)
         print(ip_output[:args.ip_open])
@@ -94,7 +97,6 @@ def ptp_stats(input_df):
     total_clicks=0
     users_click=[]
     unique_clicks=0
-    rate=0
     expl=0
     expl_users=[]
     for row in input_df.itertuples():
