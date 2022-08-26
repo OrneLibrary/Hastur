@@ -28,7 +28,7 @@ optional arguments:
                         default is to output to terminal
 
 STATS ARGUMENTS:
-  -p, --ptp             return information for PenTestPortal findings
+  -f, --findings            return information for findings
   -dc [N], --domain_creds [N]
                         return top N email domains for users who entered credentials, default is 5
   -ic [N], --ip_creds [N]
@@ -79,7 +79,7 @@ $ wc -l emails.txt
 $ wc -l passwords.txt
 75 passwords.txt
 ```
-4. Output the findings for PenTestPortal using PhishDump.csv as the CSV dump file. 
+4. Output the findings using PhishDump.csv as the CSV dump file. 
 ```
 $ python3 hastur.py PhishDump.py -p
 Number of Emails Sent: 1992

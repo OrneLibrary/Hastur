@@ -16,7 +16,7 @@ def main():
     parser.add_argument("-o","--output",help="output emails and passwords to two txt files",action="store_true")
 
     StatsParser=parser.add_argument_group("STATS ARGUMENTS")
-    StatsParser.add_argument("-p","--ptp", help="return information for PenTestPortal findings", action='store_true')
+    StatsParser.add_argument("-f","--findings", help="return information for findings", action='store_true')
     StatsParser.add_argument("-dc", "--domain_creds", help="return top N email domains for users who entered credentials, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
     StatsParser.add_argument("-ic", "--ip_creds",help="return top N remote IPs for user who entered credentials, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
     StatsParser.add_argument("-il", "--ip_click",
@@ -28,15 +28,19 @@ def main():
 
     args=parser.parse_args()
     
-    # Read in the output of gophish
+    # Read in the output of gophish csv
     phish_df=read_phish(args.phish_csv)
 
     # Print out the credentials in scope 
     if (args.scope): 
         ip_list=read_scope(args.scope)
         creds,full=return_in_scope(phish_df,ip_list)
+
+        # If output to txt files is requested
         if (args.output):
             return_output(creds)
+
+        #Otherwise output to the command line
         else:
             print('Credentials in Scope: ')
             print('-----------------------------------------')
@@ -50,26 +54,34 @@ def main():
     # Print out the domains in GoPhish (stats)
     elif (args.domain_creds):
         d=return_domains(phish_df)
+
+        # Print the requested domains
         print(d[:args.domain_creds])
 
     # Print out all IPs in GoPhish that entered credentials
     elif (args.ip_creds):
         ip_output,_,_=return_remote_ip(phish_df)
+
+        # Print out the requested number of IP addresses that provided credentials
         print(ip_output[:args.ip_creds])
 
     # Print out all IPs in GoPhish that clicked on the link
     elif (args.ip_click):
         _,_,ip_output=return_remote_ip(phish_df)
+
+        # Print out the requested number of IP addresses that provided credentials
         print(ip_output[:args.ip_click])
 
     # Print out all IPs in GoPhish that opened the email
     elif (args.ip_open):
         _,ip_output,_=return_remote_ip(phish_df)
+
+        # Print out the requested number of IP addresses that opened the email
         print(ip_output[:args.ip_open])
 
-    # If the PTP stats are requested 
-    elif (args.ptp):
-        emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,expl,length_campaign=ptp_stats(phish_df)
+    # If the findings stats are requested
+    elif (args.findings):
+        emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,expl,length_campaign=findings_stats(phish_df)
         print(f'Number of Emails Sent: {emails_sent}')
         print(f'Number of Emails Delivered: {emails_delivered}')
         print(f'Number of Unique Clicks: {unique_clicks}')
@@ -80,18 +92,26 @@ def main():
         print(f'Length of Campaign (HH:MM:SS): {length_campaign}')
 
 
-    # Print out all credentials and output from CSV 
+    # Print out all credentials
     else:
         all=return_allcreds(phish_df)
+
+        # If the output to txt file is requested
         if (args.output):
             return_output(all)
-        else: 
+
+        # Otherwise output to the command line
+        else:
             print('Credentials: ')
             print('-----------------------------------------')
             print('\n'.join(map(str,all)))
             print('-----------------------------------------')
 
-def ptp_stats(input_df):
+
+def findings_stats(input_df):
+    """
+    Return statistics for emails sent, emails delivered, unique clicks, click rate, total clicks, time to first click, number exploited, and the length of the campaign
+    """
     emails_sent=0
     emails_delivered=0
     total_clicks=0
@@ -124,8 +144,11 @@ def ptp_stats(input_df):
 
     return emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,expl,length_campaign
 
-# Send usernames and emails to username.txt and passwords.txt within local directory 
+
 def return_output(complete_output):
+    """
+    Send the usernames/emails and credentials to username.txt and passwords.txt within local directory
+    """
     with open('emails.txt', 'w') as f_email, open('passwords.txt', 'w') as f_pass:
         for line in complete_output:
             emails=str(line['email']).split("\'")[1] #grab the emails 
@@ -135,14 +158,18 @@ def return_output(complete_output):
             f_email.write(emails + '\n')
             f_pass.write(passwords+'\n')
 
-
-# Return a list of IPs in scope for the assessment 
 def read_scope(input_scope):
+    """
+    Read the scoping document and format properly for use with other functions in Hastur
+    """
     ip_scope = pd.read_csv(input_scope, engine="python")
     print(ip_scope)
     return ip_scope['IP'].tolist()
-# Return the phishing results in a Pandas DataFrame 
+
 def read_phish(input_phish):
+    """
+    Format the input csv into a pandas dataframe
+    """
     row_email=[]
     row_message=[]
     row_details=[]
@@ -158,8 +185,10 @@ def read_phish(input_phish):
     df['details'].replace('', np.nan, inplace=True)
     return df
 
-# Return the credentials for users that are in scope 
 def return_in_scope(input_df,input_ip_list):
+    """
+    Return the credentials for users/email addresses that are in scope
+    """
     finalvalid_creds=[]
     finalvalid_full=[]
     input_df.dropna(subset=['details'],inplace=True)
@@ -172,8 +201,11 @@ def return_in_scope(input_df,input_ip_list):
 
     return list(finalvalid_creds),list(finalvalid_full)
 
-# Return all domains from the GoPhish csv file 
+
 def return_domains(input_df):
+    """
+    Return the emails domains for users/email addresses that are in scope
+    """
     domains_creds=[]
     input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
@@ -184,8 +216,11 @@ def return_domains(input_df):
     domains_final_df = domains_final_df.rename(columns={'index':'domain', 0:'count'}).sort_values(by=['count'],ascending=False)
     return domains_final_df
 
-# Return all IP addresses from the GoPhish csv file 
+
 def return_remote_ip(input_df):
+    """
+    Return IP address statistics based on users who submitted data, clicked the link, and opened the email
+    """
     remote_ip=[]
     remote_ip_open=[]
     remote_ip_click=[]
@@ -210,8 +245,10 @@ def return_remote_ip(input_df):
 
     return remote_final_df,remote_final_df_open,remote_final_df_click
 
-# Return all credentials in the GoPhish csv file, regardless of in scope or not 
 def return_allcreds(input_df):
+    """
+    Return all credentials, regardless of scope
+    """
     all_creds=[]
     input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
@@ -219,7 +256,6 @@ def return_allcreds(input_df):
         if "email" in row_json['payload'] and "password" in row_json['payload']:
             if row_json['payload'] not in all_creds:
                 all_creds.append(row_json['payload'])
-    
     return all_creds
 
 if __name__=="__main__":
