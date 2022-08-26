@@ -1,18 +1,22 @@
-# PyPhish
+# Hastur 
 
-Analyze output of GoPhish to find emails, passwords, domains, and/or unique IP addresses. 
+Analyze output of GoPhish with python to produce findings and capture credentials. 
+
+<p align="center">
+  <img src="images/phish.png">
+</p>
 
 ## Install
 ```
-git clone https://github.com/OrneLibrary/pyphish
-cd pyphish
+git clone https://github.com/OrneLibrary/hastur
+cd hastur
 ```
 
 ## Usage 
 ```
-usage: pyphish.py [-h] [-scope abs_path] [-o] [-p] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] phish_absolute_path
+usage: hastur.py [-h] [-scope abs_path] [-o] [-p] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] phish_absolute_path
 
-pyphish - pull information from GoPhish and request stats or beautify output
+hastur - pull information from GoPhish and request stats or beautify output
 
 positional arguments:
   phish_absolute_path   specify the location of the csv dump from GoPhish
@@ -39,7 +43,7 @@ STATS ARGUMENTS:
 
 1. Return all credentials from CSV dump file named PhishDump.csv to the command line. 
 ```
-$ python3 pyphish.py PhishDump.csv
+$ python3 hastur.py PhishDump.csv
 Credentials:
 -----------------------------------------
 {'email': ['user1@mail.com'], 'password': ['password1'], 'rid': ['wkwfnUG']}
@@ -50,7 +54,7 @@ Credentials:
 ```
 2. Return in-scope credentials from CSV dump file name PhishDump.csv to the command line using scope IPs found in public_ips.txt.
 ```
-$ python3 pyphish.py PhishDump.csv -scope public_ips.txt
+$ python3 hastur.py PhishDump.csv -scope public_ips.txt
                 IP
 0           [IP Address1]
 1           [IP Address2]
@@ -69,7 +73,7 @@ Full output in Scope:
 3. Output all credentials (no matter of scope) to two files in the local directory for use later from the CSV dump file PhishDump.csv. 
 
 ```
-$ python3 pyphish.py PhishDump.csv -o
+$ python3 hastur.py PhishDump.csv -o
 $ wc -l emails.txt
 74 emails.txt
 $ wc -l passwords.txt
@@ -77,7 +81,7 @@ $ wc -l passwords.txt
 ```
 4. Output the findings for PenTestPortal using PhishDump.csv as the CSV dump file. 
 ```
-$ python3 pyphish.py PhishDump.py -p
+$ python3 hastur.py PhishDump.py -p
 Number of Emails Sent: 1992
 Number of Emails Delivered: 1992
 Number of Unique Clicks: 167
@@ -89,7 +93,7 @@ Length of Campaign (HH:MM:SS): 3 days, 0:47:10.139899
 ```
 5. Return the top 6 email domains that entered credentials from the PhishDump.csv file. 
 ```
-$ python3 pyphish.py PhishDump.csv -dc 6
+$ python3 hastur.py PhishDump.csv -dc 6
                       count
 google.com              120
 yahoo.com                28
@@ -100,7 +104,7 @@ verizon.net               4
 ```
 6. Return the top 5 IP addresses for users who opened the email within the PhishDump.csv file. 
 ```
-python3 pyphish.py PhishDump.csv -io
+python3 hastur.py PhishDump.csv -io
                 count
 [IP Address1]       20
 [IP Address2]       18
@@ -109,7 +113,7 @@ python3 pyphish.py PhishDump.csv -io
 [IP Address5]       12
 ```
 ## GoPhish CSV Download Steps
-In order to properly utilize ```pyphish```, follow the below steps to dump the CSV from GoPhish. 
+In order to properly utilize ```hastur```, follow the below steps to dump the CSV from GoPhish. 
 1. Navigate to GoPhish Server Dashboard and Click on "Campaigns." 
 
     ![Dashboard](images/dashboard.png?raw=true "Dashboard")
@@ -137,7 +141,7 @@ In order to properly utilize ```pyphish```, follow the below steps to dump the C
 7. Save the CSV in the desired working directory.
 
 ## In-Scope IP Address Preparation (Optional)
-In order to properly utilize ```pyphish``` with the in-scope capabilities, create a txt file modeled like the below. 
+In order to properly utilize ```hastur``` with the in-scope capabilities, create a txt file modeled like the below. 
 
 ScopeAddresses.txt
 ```
@@ -148,7 +152,7 @@ x.x.x.x
 x.x.x.x
 ```
 
-Do not use netmasks. Ensure each line is an individual address.
+Do not use netmasks. Ensure each line is an individual address. Use DeepOne if necessary. 
 
 ## Dependencies
 Python 3.8.10

@@ -8,12 +8,12 @@ import numpy as np
 
 def main():
     """
-    Main function for pyphish
+    Main function for hastur
     """
-    parser = argparse.ArgumentParser(description='pyphish - pull information from GoPhish and request stats or beautify output')
+    parser = argparse.ArgumentParser(description='hastur - pull information from GoPhish and request stats or beautify output')
     parser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish',metavar='phish_absolute_path')
     parser.add_argument("-scope", help='specify the location of text file with IPs in scope',metavar='abs_path')
-    parser.add_argument("-o","--output",help="output emails and passwords to two txt files (usernames.txt and passwords.txt) in local directory, default is to output to terminal", action="store_true")
+    parser.add_argument("-o","--output",help="output emails and passwords to two txt files",action="store_true")
 
     StatsParser=parser.add_argument_group("STATS ARGUMENTS")
     StatsParser.add_argument("-p","--ptp", help="return information for PenTestPortal findings", action='store_true')
