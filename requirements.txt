@@ -1,0 +1,6 @@
+###### Requirements without Version Specifiers ######
+pandas
+numpy
+argparse
+python-dateutil
+Counter
