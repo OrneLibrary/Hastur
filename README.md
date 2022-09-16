@@ -10,6 +10,7 @@ Analyze output of GoPhish with python to produce findings and capture credential
 ```
 git clone https://github.com/OrneLibrary/hastur
 cd hastur
+pip3 install -r requirements.txt
 ```
 
 ## Usage 
