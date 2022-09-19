@@ -51,6 +51,7 @@ Credentials:
 {'email': ['user2@mail.com'], 'password': ['password12'], 'rid': ['ze4b4H0']}
 {'email': ['user3@mail.com'], 'password': ['p@ssword1'], 'rid': ['o9idyZN']}
 {'email': ['user4@mail.com'], 'password': ['123456789'], 'rid': ['NDjWBLS']}
+{'email': ['user4@mail.com'], 'password': ['1234567'], 'rid': ['NDjWBLS']}
 -----------------------------------------
 ```
 2. Return in-scope credentials from CSV dump file name PhishDump.csv to the command line using scope IPs found in public_ips.txt.
@@ -82,15 +83,16 @@ $ wc -l passwords.txt
 ```
 4. Output the findings using PhishDump.csv as the CSV dump file. 
 ```
-$ python3 hastur.py PhishDump.py -p
-Number of Emails Sent: 1992
-Number of Emails Delivered: 1992
-Number of Unique Clicks: 167
-Click Rate (%): 8.38
-Total Number of Clicks: 300
-Time to First Click (HH:MM:SS): 0:01:14.617408
-Number of Exploited: 56
-Length of Campaign (HH:MM:SS): 3 days, 0:47:10.139899
+$ python3 hastur.py PhishDump.py -f
+Number of Emails Sent: 669
+Number of Emails Delivered: 669
+Number of Unique Clicks: 602
+Click Rate (%): 89.99
+Total Number of Clicks: 1052
+Time to First Click (HH:MM:SS): 0:21:21.869481
+Number of Unique User and Password Combinations Exploited/Submitted Data: 34
+Number of Total Users Exploited/Submitted Data: 62
+Length of Campaign (HH:MM:SS): 2 days, 20:32:37.902602
 ```
 5. Return the top 6 email domains that entered credentials from the PhishDump.csv file. 
 ```

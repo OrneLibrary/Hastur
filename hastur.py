@@ -81,14 +81,15 @@ def main():
 
     # If the findings stats are requested
     elif (args.findings):
-        emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,expl,length_campaign=findings_stats(phish_df)
+        emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,unique_expl,total_expl,length_campaign=findings_stats(phish_df)
         print(f'Number of Emails Sent: {emails_sent}')
         print(f'Number of Emails Delivered: {emails_delivered}')
         print(f'Number of Unique Clicks: {unique_clicks}')
         print(f'Click Rate (%): {round(rate*100, 2)}') 
         print(f'Total Number of Clicks: {total_clicks}')
         print(f'Time to First Click (HH:MM:SS): {time_to_first}')
-        print(f'Number of Exploited: {expl}')
+        print(f'Number of Unique User and Password Combinations Exploited/Submitted Data: {unique_expl}')
+        print(f'Number of Total Users Exploited/Submitted Data: {total_expl}')
         print(f'Length of Campaign (HH:MM:SS): {length_campaign}')
 
 
@@ -117,7 +118,8 @@ def findings_stats(input_df):
     total_clicks=0
     users_click=[]
     unique_clicks=0
-    expl=0
+    unique_expl=0
+    total_expl=0
     expl_users=[]
     for row in input_df.itertuples():
         if row.message == 'Campaign Created':
@@ -133,16 +135,18 @@ def findings_stats(input_df):
                 unique_clicks=unique_clicks+1
                 users_click.append(row.email)
         if row.message == 'Submitted Data':
-            if row.email not in expl_users:
-                expl=expl+1
-                expl_users.append(row.email)
+            row_json=json.loads(row.details)
+            if row.email+"--"+str(row_json['payload']['password']) not in expl_users:
+                unique_expl=unique_expl+1
+                expl_users.append(row.email+"--"+str(row_json['payload']['password']))
+            total_expl=total_expl+1 
         last_time=parser.parse(row.time)
     
     rate=unique_clicks/emails_sent
     time_to_first=first_click-campaign_begin
     length_campaign=last_time-campaign_begin
 
-    return emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,expl,length_campaign
+    return emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,unique_expl,total_expl,length_campaign
 
 
 def return_output(complete_output):
