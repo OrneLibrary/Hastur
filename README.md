@@ -15,7 +15,8 @@ pip3 install -r requirements.txt
 
 ## Usage 
 ```
-usage: hastur.py [-h] [-scope abs_path] [-o] [-p] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] phish_absolute_path
+usage: hastur.py [-h] [-scope abs_path] [-f] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] [-n NAME] [-e EMAIL] [-p PASSWORDS]
+                 phish_absolute_path
 
 hastur - pull information from GoPhish and request stats or beautify output
 
@@ -25,11 +26,11 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -scope abs_path       specify the location of text file with IPs in scope
-  -o, --output          output emails and passwords to two txt files (usernames.txt and passwords.txt) in local directory,
-                        default is to output to terminal
 
 STATS ARGUMENTS:
-  -f, --findings            return information for findings
+  specify various statistics from GoPhish
+
+  -f, --findings        return information for findings
   -dc [N], --domain_creds [N]
                         return top N email domains for users who entered credentials, default is 5
   -ic [N], --ip_creds [N]
@@ -38,6 +39,16 @@ STATS ARGUMENTS:
                         return top N remote IPs for user who clicked, default is 5
   -io [N], --ip_open [N]
                         return top N remote IPs for user who opened email, default is 5
+
+OUTPUT ARGUMENTS:
+  request credentials and emails to be saved for future use
+
+  -n NAME, --name NAME  request a single file with emails:passwords
+  -e EMAIL, --email EMAIL
+                        specify a seperate file with only emails
+  -p PASSWORDS, --passwords PASSWORDS
+                        specify a seperate file with only passwords
+
 ```                  
 
 ## Usage Examples 
@@ -72,14 +83,10 @@ Full output in Scope:
 {'payload':{'email': ['user4@mail.com'], 'password': ['123456789'], 'rid': ['NDjWBLS']}, 'browser': {'address': 'x.x.x.x', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'}}
 -----------------------------------------
 ```
-3. Output all credentials (no matter of scope) to two files in the local directory for use later from the CSV dump file PhishDump.csv. 
+3. Output credentials to a file named output.txt with emails:passwords from GoPhish. 
 
 ```
-$ python3 hastur.py PhishDump.csv -o
-$ wc -l emails.txt
-74 emails.txt
-$ wc -l passwords.txt
-75 passwords.txt
+$ python3 hastur.py PhishDump.csv -n output.txt 
 ```
 4. Output the findings using PhishDump.csv as the CSV dump file. 
 ```
@@ -114,6 +121,10 @@ python3 hastur.py PhishDump.csv -io
 [IP Address3]       18
 [IP Address4]       14
 [IP Address5]       12
+```
+7. Output passwords and emails from PhishDump.csv to a file name passwords.txt and emails.txt respectively. 
+```
+$ python3 hastur.py PhishDump.csv -e emails.txt -p passwords.txt
 ```
 ## GoPhish CSV Download Steps
 In order to properly utilize ```hastur```, follow the below steps to dump the CSV from GoPhish. 
