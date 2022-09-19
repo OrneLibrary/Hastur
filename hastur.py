@@ -13,9 +13,8 @@ def main():
     parser = argparse.ArgumentParser(description='hastur - pull information from GoPhish and request stats or beautify output')
     parser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish',metavar='phish_absolute_path')
     parser.add_argument("-scope", help='specify the location of text file with IPs in scope',metavar='abs_path')
-    parser.add_argument("-o","--output",help="output emails and passwords to two txt files",action="store_true")
 
-    StatsParser=parser.add_argument_group("STATS ARGUMENTS")
+    StatsParser=parser.add_argument_group("STATS ARGUMENTS",description="specify various statistics from GoPhish")
     StatsParser.add_argument("-f","--findings", help="return information for findings", action='store_true')
     StatsParser.add_argument("-dc", "--domain_creds", help="return top N email domains for users who entered credentials, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
     StatsParser.add_argument("-ic", "--ip_creds",help="return top N remote IPs for user who entered credentials, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
@@ -25,6 +24,11 @@ def main():
     StatsParser.add_argument("-io", "--ip_open",
                              help="return top N remote IPs for user who opened email, default is 5", type=int,
                              const=5, action='store', metavar='N', nargs='?')
+
+    OutParser=parser.add_argument_group("OUTPUT ARGUMENTS",description='request credentials and emails to be saved for future use')
+    OutParser.add_argument('-n','--name',help="request a single file with emails:passwords",action='store')
+    OutParser.add_argument('-e','--email',help="specify a seperate file with only emails",action='store')
+    OutParser.add_argument('-p','--passwords',help="specify a seperate file with only passwords",action='store')
 
     args=parser.parse_args()
     
@@ -36,20 +40,23 @@ def main():
         ip_list=read_scope(args.scope)
         creds,full=return_in_scope(phish_df,ip_list)
 
-        # If output to txt files is requested
-        if (args.output):
-            return_output(creds)
+       # if requesting output to a file 
+        if (args.name):
+            return_output(creds,args.name)
+        if (args.email):
+            return_output_email(creds,args.email)
+        if (args.passwords):
+            return_output_password(creds,args.passwords)
 
-        #Otherwise output to the command line
-        else:
-            print('Credentials in Scope: ')
-            print('-----------------------------------------')
-            print('\n'.join(map(str,creds)))
-            print('-----------------------------------------')
-            print('Full output in Scope:')
-            print('-----------------------------------------')
-            print('\n'.join(map(str,full)))
-            print('-----------------------------------------')
+    
+        print('Credentials in Scope: ')
+        print('-----------------------------------------')
+        print('\n'.join(map(str,creds)))
+        print('-----------------------------------------')
+        print('Full output in Scope:')
+        print('-----------------------------------------')
+        print('\n'.join(map(str,full)))
+        print('-----------------------------------------')
 
     # Print out the domains in GoPhish (stats)
     elif (args.domain_creds):
@@ -95,11 +102,16 @@ def main():
 
     # Print out all credentials
     else:
-        all=return_allcreds(phish_df)
+        all_creds=return_allcreds(phish_df)
 
-        # If the output to txt file is requested
-        if (args.output):
-            return_output(all)
+        # if requesting output to a file 
+        if (args.name) or args.email or args.passwords: 
+            if (args.name):
+                return_output(all_creds,args.name)
+            if (args.email):
+                return_output_email(all_creds,args.email)
+            if (args.passwords):
+                return_output_password(all_creds,args.passwords)
 
         # Otherwise output to the command line
         else:
@@ -149,17 +161,34 @@ def findings_stats(input_df):
     return emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,unique_expl,total_expl,length_campaign
 
 
-def return_output(complete_output):
+def return_output(complete_output,name):
     """
-    Send the usernames/emails and credentials to username.txt and passwords.txt within local directory
+    Send emails and passwords to file of choice 
     """
-    with open('emails.txt', 'w') as f_email, open('passwords.txt', 'w') as f_pass:
+    with open(name,'w') as f:
         for line in complete_output:
             emails=str(line['email']).split("\'")[1] #grab the emails 
             passwords=str(line['password']).split("\'")[1] #grab the passwords
 
             # Write the emails and passwords to the txt files 
+            f.write(emails+ ":" + passwords+ '\n')
+
+def return_output_email(complete_output,name):
+    """
+    Send emails to file of choice 
+    """
+    with open(name, 'w') as f_email:
+        for line in complete_output:
+            emails=str(line['email']).split("\'")[1] #grab the emails
             f_email.write(emails + '\n')
+
+def return_output_password(complete_output,name):
+    """
+    Send passwords to file of choice 
+    """
+    with open(name, 'w') as f_pass:
+        for line in complete_output:
+            passwords=str(line['password']).split("\'")[1] #grab the passwords
             f_pass.write(passwords+'\n')
 
 def read_scope(input_scope):
