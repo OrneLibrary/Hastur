@@ -15,13 +15,12 @@ pip3 install -r requirements.txt
 
 ## Usage 
 ```
-usage: hastur.py [-h] [-scope abs_path] [-f] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] [-n NAME] [-e EMAIL] [-p PASSWORDS]
-                 phish_absolute_path
+usage: hastur.py [-h] [-scope abs_path] [-f] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] [-n NAME] [-e EMAIL] [-p PASSWORDS] phish_dump
 
 hastur - pull information from GoPhish and request stats or beautify output
 
 positional arguments:
-  phish_absolute_path   specify the location of the csv dump from GoPhish
+  phish_dump            specify the location of the csv dump from GoPhish, can be single file or directory
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -84,7 +83,6 @@ Full output in Scope:
 -----------------------------------------
 ```
 3. Output credentials to a file named output.txt with emails:passwords from GoPhish. 
-
 ```
 $ python3 hastur.py PhishDump.csv -n output.txt 
 ```
@@ -126,6 +124,31 @@ python3 hastur.py PhishDump.csv -io
 ```
 $ python3 hastur.py PhishDump.csv -e emails.txt -p passwords.txt
 ```
+8. Return credentials from multiple campaigns within a phish_directory directory to the terminal. 
+```
+$ python3 hastur.py phish_directory
+Credentials:
+-----------------------------------------
+{'email': ['user1@mail.com'], 'password': ['password1'], 'rid': ['wkwfnUG']}
+{'email': ['user2@mail.com'], 'password': ['password12'], 'rid': ['ze4b4H0']}
+{'email': ['user3@mail.com'], 'password': ['p@ssword1'], 'rid': ['o9idyZN']}
+{'email': ['user4@mail.com'], 'password': ['123456789'], 'rid': ['NDjWBLS']}
+{'email': ['user4@mail.com'], 'password': ['1234567'], 'rid': ['NDjWBLS']}
+-----------------------------------------
+```
+9. Output the findings across multiple campaigns within the phish_directory. 
+```
+$ python3 hastur.py phish_directory -f                                                                                 
+Number of Emails Sent: 2469
+Number of Emails Delivered: 2469
+Number of Unique Clicks: 1233
+Click Rate (%): 49.94
+Total Number of Clicks: 2233
+Time to First Click (HH:MM:SS): 1 day, 22:25:23.496496
+Number of Unique User and Password Combinations Exploited/Submitted Data: 130
+Number of Total Users Exploited/Submitted Data: 273
+Length of Campaign (HH:MM:SS): 2 days, 22:53:20.855733
+```
 ## GoPhish CSV Download Steps
 In order to properly utilize ```hastur```, follow the below steps to dump the CSV from GoPhish. 
 1. Navigate to GoPhish Server Dashboard and Click on "Campaigns." 
@@ -148,11 +171,7 @@ In order to properly utilize ```hastur```, follow the below steps to dump the CS
 
     ![Raw Events](images/rawevents.png?raw=true "Raw Events")
 
-6. Click "Open With" Sublime Text and ensure it is comma seperated. 
-
-    ![Open With](images/saveas.png?raw=true "Open With")
-
-7. Save the CSV in the desired working directory.
+6. Save the CSV in the desired working directory.
 
 ## In-Scope IP Address Preparation (Optional)
 In order to properly utilize ```hastur``` with the in-scope capabilities, create a txt file modeled like the below. 
