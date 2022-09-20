@@ -5,13 +5,15 @@ import argparse
 import csv
 from dateutil import parser
 import numpy as np
+import os 
+from pathlib import Path
 
 def main():
     """
     Main function for hastur
     """
     parser = argparse.ArgumentParser(description='hastur - pull information from GoPhish and request stats or beautify output')
-    parser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish',metavar='phish_absolute_path')
+    parser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish, can be single file or directory',metavar='phish_dump')
     parser.add_argument("-scope", help='specify the location of text file with IPs in scope',metavar='abs_path')
 
     StatsParser=parser.add_argument_group("STATS ARGUMENTS",description="specify various statistics from GoPhish")
@@ -31,9 +33,23 @@ def main():
     OutParser.add_argument('-p','--passwords',help="specify a seperate file with only passwords",action='store')
 
     args=parser.parse_args()
-    
+
     # Read in the output of gophish csv
-    phish_df=read_phish(args.phish_csv)
+    if os.path.isdir(args.phish_csv):
+        phish_df=pd.DataFrame()
+        for filename in os.listdir(args.phish_csv):
+            initial_df=read_phish(os.path.abspath(args.phish_csv + "/"+filename))
+            if len(phish_df)==0:
+                phish_df=initial_df
+            else: 
+                phish_df=pd.concat([phish_df,initial_df])
+
+    # Read in the single file 
+    elif os.path.isfile(args.phish_csv): 
+        phish_df=read_phish(args.phish_csv)
+    else: 
+        print('Invalid input, a file or directory is required.')
+        return  
 
     # Print out the credentials in scope 
     if (args.scope): 
@@ -117,7 +133,7 @@ def main():
         else:
             print('Credentials: ')
             print('-----------------------------------------')
-            print('\n'.join(map(str,all)))
+            print('\n'.join(map(str,all_creds)))
             print('-----------------------------------------')
 
 

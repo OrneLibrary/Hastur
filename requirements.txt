@@ -4,3 +4,4 @@ numpy
 argparse
 python-dateutil
 Counter
+pathlib
