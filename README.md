@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 
 ## Usage 
 ```
-usage: hastur.py [-h] [-scope abs_path] [-f] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] [-n NAME] [-e EMAIL] [-p PASSWORDS] phish_dump
+usage: hastur.py [-h] [-scope abs_path] [-f] [-dc [N]] [-ic [N]] [-il [N]] [-io [N]] [-n NAME] [-e EMAIL] [-p PASSWORDS] [-c CLICKS] phish_dump
 
 hastur - pull information from GoPhish and request stats or beautify output
 
@@ -40,13 +40,16 @@ STATS ARGUMENTS:
                         return top N remote IPs for user who opened email, default is 5
 
 OUTPUT ARGUMENTS:
-  request credentials and emails to be saved for future use
+  request credentials, user clicks, or other information for future use
 
-  -n NAME, --name NAME  request a single file with emails:passwords
+  -n NAME, --name NAME  request a single file with emails:passwords credentials
   -e EMAIL, --email EMAIL
-                        specify a seperate file with only emails
+                        specify a seperate file with only emails that provided credentials
   -p PASSWORDS, --passwords PASSWORDS
                         specify a seperate file with only passwords
+  -c CLICKS, --clicks CLICKS
+                        output users who clicked link to a file for future use
+
 
 ```                  
 

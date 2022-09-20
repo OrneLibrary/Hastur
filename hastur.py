@@ -27,10 +27,11 @@ def main():
                              help="return top N remote IPs for user who opened email, default is 5", type=int,
                              const=5, action='store', metavar='N', nargs='?')
 
-    OutParser=parser.add_argument_group("OUTPUT ARGUMENTS",description='request credentials and emails to be saved for future use')
-    OutParser.add_argument('-n','--name',help="request a single file with emails:passwords",action='store')
-    OutParser.add_argument('-e','--email',help="specify a seperate file with only emails",action='store')
+    OutParser=parser.add_argument_group("OUTPUT ARGUMENTS",description='request credentials, user clicks, or other information for future use')
+    OutParser.add_argument('-n','--name',help="request a single file with emails:passwords credentials",action='store')
+    OutParser.add_argument('-e','--email',help="specify a seperate file with only emails that provided credentials",action='store')
     OutParser.add_argument('-p','--passwords',help="specify a seperate file with only passwords",action='store')
+    OutParser.add_argument('-c','--clicks',help="output users who clicked link to a file for future use",action='store')
 
     args=parser.parse_args()
 
@@ -117,6 +118,8 @@ def main():
 
 
     # Print out all credentials
+    elif (args.clicks):
+        return_clicks(phish_df,args.clicks)
     else:
         all_creds=return_allcreds(phish_df)
 
@@ -176,7 +179,18 @@ def findings_stats(input_df):
 
     return emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,unique_expl,total_expl,length_campaign
 
-
+def return_clicks(input_df,name):
+    """
+    Write the user emails that clicked to a file
+    """
+    user_click_list=[]
+    with open(name,'w') as f: 
+        for row in input_df.itertuples():
+            if row.message == 'Clicked Link' and row.email not in user_click_list:
+                f.write(row.email+'\n')
+                user_click_list.append(row.email)
+            
+    
 def return_output(complete_output,name):
     """
     Send emails and passwords to file of choice 
