@@ -152,6 +152,16 @@ Number of Unique User and Password Combinations Exploited/Submitted Data: 130
 Number of Total Users Exploited/Submitted Data: 273
 Length of Campaign (HH:MM:SS): 2 days, 22:53:20.855733
 ```
+10. Output the findings across multiple campaigns within phish_directory for IPs in scope from livehosts. 
+```
+$ python3 hastur.py phish_directory -f -scope livehosts.txt                                                                   
+Number of Unique Clicks: 19
+Unique Click Rate (%): 11.24
+Total Number of Clicks: 34
+Number of Unique User and Password Combinations Exploited/Submitted Data: 12
+Number of Total Users Exploited/Submitted Data: 28
+```
+
 ## GoPhish CSV Download Steps
 In order to properly utilize ```hastur```, follow the below steps to dump the CSV from GoPhish. 
 1. Navigate to GoPhish Server Dashboard and Click on "Campaigns." 
