@@ -37,13 +37,14 @@ def main():
 
     # Read in the output of gophish csv
     if os.path.isdir(args.phish_csv):
-        phish_df=pd.DataFrame()
+        unsorted_df=pd.DataFrame()
         for filename in os.listdir(args.phish_csv):
             initial_df=read_phish(os.path.abspath(args.phish_csv + "/"+filename))
-            if len(phish_df)==0:
-                phish_df=initial_df
+            if len(unsorted_df)==0:
+                unsorted_df=initial_df
             else: 
-                phish_df=pd.concat([phish_df,initial_df])
+                unsorted_df=pd.concat([unsorted_df,initial_df])
+        phish_df=unsorted_df.sort_values(by='time')
 
     # Read in the single file 
     elif os.path.isfile(args.phish_csv): 
@@ -55,25 +56,35 @@ def main():
     # Print out the credentials in scope 
     if (args.scope): 
         ip_list=read_scope(args.scope)
-        creds,full=return_in_scope(phish_df,ip_list)
+        if not (args.findings):
+            creds,full=return_in_scope(phish_df,ip_list)
 
-       # if requesting output to a file 
-        if (args.name):
-            return_output(creds,args.name)
-        if (args.email):
-            return_output_email(creds,args.email)
-        if (args.passwords):
-            return_output_password(creds,args.passwords)
+           # if requesting output to a file 
+            if (args.name):
+                return_output(creds,args.name)
+            if (args.email):
+                return_output_email(creds,args.email)
+            if (args.passwords):
+                return_output_password(creds,args.passwords)
 
-    
-        print('Credentials in Scope: ')
-        print('-----------------------------------------')
-        print('\n'.join(map(str,creds)))
-        print('-----------------------------------------')
-        print('Full output in Scope:')
-        print('-----------------------------------------')
-        print('\n'.join(map(str,full)))
-        print('-----------------------------------------')
+            print('Credentials in Scope: ')
+            print('-----------------------------------------')
+            print('\n'.join(map(str,creds)))
+            print('-----------------------------------------')
+            print('Full output in Scope:')
+            print('-----------------------------------------')
+            print('\n'.join(map(str,full)))
+            print('-----------------------------------------')
+        else:
+            # Requesting findings for in-scope data
+            new_phish_df=downselect_df(phish_df,ip_list)
+            unique_clicks,rate,total_clicks,unique_expl,total_expl=findings_stats_scope(new_phish_df)
+
+            print(f'Number of Unique Clicks: {unique_clicks}')
+            print(f'Unique Click Rate (%): {round(rate*100, 2)}') 
+            print(f'Total Number of Clicks: {total_clicks}')
+            print(f'Number of Unique User and Password Combinations Exploited/Submitted Data: {unique_expl}')
+            print(f'Number of Total Users Exploited/Submitted Data: {total_expl}')         
 
     # Print out the domains in GoPhish (stats)
     elif (args.domain_creds):
@@ -109,7 +120,7 @@ def main():
         print(f'Number of Emails Sent: {emails_sent}')
         print(f'Number of Emails Delivered: {emails_delivered}')
         print(f'Number of Unique Clicks: {unique_clicks}')
-        print(f'Click Rate (%): {round(rate*100, 2)}') 
+        print(f'Unique Click Rate (%): {round(rate*100, 2)}') 
         print(f'Total Number of Clicks: {total_clicks}')
         print(f'Time to First Click (HH:MM:SS): {time_to_first}')
         print(f'Number of Unique User and Password Combinations Exploited/Submitted Data: {unique_expl}')
@@ -152,9 +163,11 @@ def findings_stats(input_df):
     unique_expl=0
     total_expl=0
     expl_users=[]
+    first_campaign=True
     for row in input_df.itertuples():
-        if row.message == 'Campaign Created':
+        if row.message == 'Campaign Created' and first_campaign:
             campaign_begin=parser.parse(row.time)
+            first_campaign=False
         if row.message == 'Email Sent':
             emails_sent=emails_sent+1
             emails_delivered=emails_delivered+1
@@ -178,6 +191,38 @@ def findings_stats(input_df):
     length_campaign=last_time-campaign_begin
 
     return emails_sent,emails_delivered,unique_clicks,rate,total_clicks,time_to_first,unique_expl,total_expl,length_campaign
+
+def findings_stats_scope(input_df):
+    """
+    Return statistics for unique clicks, click rate, total clicks, number exploited
+    """
+    total_clicks=0
+    users_click=[]
+    unique_clicks=0
+    unique_expl=0
+    total_expl=0
+    expl_users=[]
+    email_open_list=[]
+    emails_open=0
+    for row in input_df.itertuples():
+        if row.message== 'Email Opened':
+            if row.email not in email_open_list:
+                emails_open=emails_open+1
+        if row.message == 'Clicked Link':
+            total_clicks=total_clicks+1
+            if row.email not in users_click:
+                unique_clicks=unique_clicks+1
+                users_click.append(row.email)
+        if row.message == 'Submitted Data':
+            row_json=json.loads(row.details)
+            if row.email+"--"+str(row_json['payload']['password']) not in expl_users:
+                unique_expl=unique_expl+1
+                expl_users.append(row.email+"--"+str(row_json['payload']['password']))
+            total_expl=total_expl+1 
+    
+    rate=unique_clicks/emails_open
+
+    return unique_clicks,rate,total_clicks,unique_expl,total_expl
 
 def return_clicks(input_df,name):
     """
@@ -226,7 +271,6 @@ def read_scope(input_scope):
     Read the scoping document and format properly for use with other functions in Hastur
     """
     ip_scope = pd.read_csv(input_scope, engine="python")
-    print(ip_scope)
     return ip_scope['IP'].tolist()
 
 def read_phish(input_phish):
@@ -264,6 +308,17 @@ def return_in_scope(input_df,input_ip_list):
 
     return list(finalvalid_creds),list(finalvalid_full)
 
+def downselect_df(input_df,input_ip_list):
+    """
+    Downselect the input dataframe to only contain in-scope IPs
+    """
+    scope_list=[]
+    input_df.dropna(subset=['details'],inplace=True)
+    for row in input_df.itertuples():
+        row_json=json.loads(row.details)
+        if row_json['browser']['address'] in input_ip_list:
+            scope_list.append(row)
+    return pd.DataFrame(scope_list)
 
 def return_domains(input_df):
     """
