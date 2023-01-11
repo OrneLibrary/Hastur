@@ -162,7 +162,8 @@ def findings_stats(input_df):
     unique_clicks=0
     unique_expl=0
     total_expl=0
-    expl_users=[]
+    unique_emailpass_users=[] #hold the unique email and password combinations 
+    unique_email_users=[] #hold the unique email combinations 
     first_campaign=True
     for row in input_df.itertuples():
         if row.message == 'Campaign Created' and first_campaign:
@@ -180,10 +181,12 @@ def findings_stats(input_df):
                 users_click.append(row.email)
         if row.message == 'Submitted Data':
             row_json=json.loads(row.details)
-            if row.email+"--"+str(row_json['payload']['password']) not in expl_users:
+            if row.email+"--"+str(row_json['payload']['password']) not in unique_emailpass_users:
                 unique_expl=unique_expl+1
-                expl_users.append(row.email+"--"+str(row_json['payload']['password']))
-            total_expl=total_expl+1 
+                unique_emailpass_users.append(row.email+"--"+str(row_json['payload']['password']))
+            if row.email not in unique_email_users: 
+                total_expl=total_expl+1 
+                unique_email_users.append(row.email)
         last_time=parser.parse(row.time)
     
     rate=unique_clicks/emails_sent
@@ -201,13 +204,15 @@ def findings_stats_scope(input_df):
     unique_clicks=0
     unique_expl=0
     total_expl=0
-    expl_users=[]
+    unique_emailpass_users=[] #hold the unique email and password combinations 
+    unique_email_users=[] #hold the unique email combinations 
     email_open_list=[]
     emails_open=0
     for row in input_df.itertuples():
         if row.message== 'Email Opened':
             if row.email not in email_open_list:
                 emails_open=emails_open+1
+                email_open_list.append(row.email)
         if row.message == 'Clicked Link':
             total_clicks=total_clicks+1
             if row.email not in users_click:
@@ -215,10 +220,12 @@ def findings_stats_scope(input_df):
                 users_click.append(row.email)
         if row.message == 'Submitted Data':
             row_json=json.loads(row.details)
-            if row.email+"--"+str(row_json['payload']['password']) not in expl_users:
+            if row.email+"--"+str(row_json['payload']['password']) not in unique_emailpass_users:
                 unique_expl=unique_expl+1
-                expl_users.append(row.email+"--"+str(row_json['payload']['password']))
-            total_expl=total_expl+1 
+                unique_emailpass_users.append(row.email+"--"+str(row_json['payload']['password']))
+            if row.email not in unique_email_users: 
+                total_expl=total_expl+1 
+                unique_email_users.append(row.email)
     
     rate=unique_clicks/emails_open
 
@@ -322,14 +329,18 @@ def downselect_df(input_df,input_ip_list):
 
 def return_domains(input_df):
     """
-    Return the emails domains for users/email addresses that are in scope
+    Return the emails domains for users/email addresses
     """
+    unique_emails=[]
     domains_creds=[]
     input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
         row_json=json.loads(row.details)
         if row.message == "Submitted Data":
-            domains_creds.append(str(row_json['payload']['email']).split("\'")[1].split("@")[1]) #pull the domains out of the email
+            domain=str(row_json['payload']['email']).split("\'")[1].split("@")[1] #pull domain from email 
+            if row.email not in unique_emails: 
+                domains_creds.append(domain) 
+                unique_emails.append(row.email) 
     domains_final_df = pd.DataFrame.from_dict(Counter(domains_creds), orient='index')
     domains_final_df = domains_final_df.rename(columns={'index':'domain', 0:'count'}).sort_values(by=['count'],ascending=False)
     return domains_final_df
@@ -339,18 +350,25 @@ def return_remote_ip(input_df):
     """
     Return IP address statistics based on users who submitted data, clicked the link, and opened the email
     """
+    unique_emails_submit=[] 
+    unique_emails_click=[]
+    unique_emails_open=[]
     remote_ip=[]
     remote_ip_open=[]
     remote_ip_click=[]
     input_df.dropna(subset=['details'],inplace=True)
     for row in input_df.itertuples():
         row_json=json.loads(row.details)
-        if row.message == "Submitted Data":
+       
+        if row.message == "Submitted Data" and (row.email not in unique_emails_submit):
             remote_ip.append(row_json['browser']['address'])
-        if row.message == "Clicked Link":
+            unique_emails_submit.append(row.email)
+        if row.message == "Clicked Link" and row.email not in unique_emails_click:
             remote_ip_click.append(row_json['browser']['address'])
-        if row.message == "Email Opened":
+            unique_emails_click.append(row.email)
+        if row.message == "Email Opened" and row.email not in unique_emails_open:
             remote_ip_open.append(row_json['browser']['address'])
+            unique_emails_open.append(row.email)
 
     remote_final_df = pd.DataFrame.from_dict(Counter(remote_ip), orient='index')
     remote_final_df = remote_final_df.rename(columns={'index':'ip', 0:'count'}).sort_values(by=['count'],ascending=False)
