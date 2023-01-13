@@ -69,11 +69,17 @@ def main():
 
             print('Credentials in Scope: ')
             print('-----------------------------------------')
-            print('\n'.join(map(str,creds)))
+            if len(creds)==0:
+                print('[No Credentials]')
+            else: 
+                print('\n'.join(map(str,creds)))
             print('-----------------------------------------')
             print('Full output in Scope:')
             print('-----------------------------------------')
-            print('\n'.join(map(str,full)))
+            if len(full)==0:
+                print('[No Output]')
+            else: 
+                print('\n'.join(map(str,full)))
             print('-----------------------------------------')
         else:
             # Requesting findings for in-scope data
@@ -147,7 +153,10 @@ def main():
         else:
             print('Credentials: ')
             print('-----------------------------------------')
-            print('\n'.join(map(str,all_creds)))
+            if len(all_creds)==0:
+                print('[No Credentials]')
+            else: 
+                print('\n'.join(map(str,all_creds)))
             print('-----------------------------------------')
 
 
