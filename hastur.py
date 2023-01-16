@@ -7,16 +7,31 @@ from dateutil import parser
 import numpy as np
 import os 
 from pathlib import Path
+import requests 
 
 def main():
     """
     Main function for hastur
     """
     parser = argparse.ArgumentParser(description='hastur - pull information from GoPhish and request stats or beautify output')
-    parser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish, can be single file or directory',metavar='phish_dump')
     parser.add_argument("-scope", help='specify the location of text file with IPs in scope',metavar='abs_path')
 
-    StatsParser=parser.add_argument_group("STATS ARGUMENTS",description="specify various statistics from GoPhish")
+
+    """
+    Create Subparsers for CSV and API
+    """
+    subparser=parser.add_subparsers(title='INPUT METHODS',dest='input_arguments',metavar='method [options ..]')
+    csvparser=subparser.add_parser('csv',help='pull information from csv file',description='csvparser - a method to analyze the output of the GoPhish through csv')
+    apiparser=subparser.add_parser('api',help='pull information directly via API',description='apiparser - a method to analyze the output of the GoPhish through the API')
+
+    csvparser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish, can be single file or directory',metavar='phish_dump')
+    
+    apiparser.add_argument('server',action='store',help='specify GoPhish server',metavar='url')
+    apiparser.add_argument('api_key', action='store', help='specify the API key for GoPhish',metavar='api_key')
+    apiparser.add_argument('campaign_id', action='store', help='specify the campaign ID from GoPhish',metavar='campaign_id')
+
+
+    StatsParser=csvparser.add_argument_group("STATS ARGUMENTS",description="specify various statistics from GoPhish")
     StatsParser.add_argument("-f","--findings", help="return information for findings", action='store_true')
     StatsParser.add_argument("-dc", "--domain_creds", help="return top N email domains for users who entered credentials, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
     StatsParser.add_argument("-ic", "--ip_creds",help="return top N remote IPs for user who entered credentials, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
@@ -27,31 +42,61 @@ def main():
                              help="return top N remote IPs for user who opened email, default is 5", type=int,
                              const=5, action='store', metavar='N', nargs='?')
 
-    OutParser=parser.add_argument_group("OUTPUT ARGUMENTS",description='request credentials, user clicks, or other information for future use')
+    OutParser=csvparser.add_argument_group("OUTPUT ARGUMENTS",description='request credentials, user clicks, or other information for future use')
     OutParser.add_argument('-n','--name',help="request a single file with emails:passwords credentials",action='store')
     OutParser.add_argument('-e','--email',help="specify a seperate file with only emails that provided credentials",action='store')
     OutParser.add_argument('-p','--passwords',help="specify a seperate file with only passwords",action='store')
     OutParser.add_argument('-c','--clicks',help="output users who clicked link to a file for future use",action='store')
 
+
+    StatsParser=apiparser.add_argument_group("STATS ARGUMENTS",description="specify various statistics from GoPhish")
+    StatsParser.add_argument("-f","--findings", help="return information for findings", action='store_true')
+    StatsParser.add_argument("-dc", "--domain_creds", help="return top N email domains for users who entered credentials, default is 5",type=int, const=5,action='store', metavar='N',nargs='?')
+    StatsParser.add_argument("-ic", "--ip_creds",help="return top N remote IPs for user who entered credentials, default is 5",type=int, const=5,action='store',metavar='N',nargs='?')
+    StatsParser.add_argument("-il", "--ip_click",
+                             help="return top N remote IPs for user who clicked, default is 5", type=int,
+                             const=5, action='store', metavar='N', nargs='?')
+    StatsParser.add_argument("-io", "--ip_open",
+                             help="return top N remote IPs for user who opened email, default is 5", type=int,
+                             const=5, action='store', metavar='N', nargs='?')
+
+    OutParser=apiparser.add_argument_group("OUTPUT ARGUMENTS",description='request credentials, user clicks, or other information for future use')
+    OutParser.add_argument('-n','--name',help="request a single file with emails:passwords credentials",action='store')
+    OutParser.add_argument('-e','--email',help="specify a seperate file with only emails that provided credentials",action='store')
+    OutParser.add_argument('-p','--passwords',help="specify a seperate file with only passwords",action='store')
+    OutParser.add_argument('-c','--clicks',help="output users who clicked link to a file for future use",action='store')
+
+
     args=parser.parse_args()
 
+    # Download via API
+    if str(args.input_arguments)=='api':
+        headers={"Authorization":str(args.api_key)}
+        r = requests.get(str(args.server) + '/api/campaigns/'+ str(args.campaign_id) + '/results',headers=headers,verify=False)
+        phish_df=pd.DataFrame.from_dict(r.json()['timeline'])
+        phish_df['details'].replace('', np.nan, inplace=True)
+        
     # Read in the output of gophish csv
-    if os.path.isdir(args.phish_csv):
-        unsorted_df=pd.DataFrame()
-        for filename in os.listdir(args.phish_csv):
-            initial_df=read_phish(os.path.abspath(args.phish_csv + "/"+filename))
-            if len(unsorted_df)==0:
-                unsorted_df=initial_df
-            else: 
-                unsorted_df=pd.concat([unsorted_df,initial_df])
-        phish_df=unsorted_df.sort_values(by='time')
+    elif str(args.input_arguments)=="csv":
+        if os.path.isdir(args.phish_csv):
+            unsorted_df=pd.DataFrame()
+            for filename in os.listdir(args.phish_csv):
+                initial_df=read_phish(os.path.abspath(args.phish_csv + "/"+filename))
+                if len(unsorted_df)==0:
+                    unsorted_df=initial_df
+                else: 
+                    unsorted_df=pd.concat([unsorted_df,initial_df])
+            phish_df=unsorted_df.sort_values(by='time')
 
-    # Read in the single file 
-    elif os.path.isfile(args.phish_csv): 
-        phish_df=read_phish(args.phish_csv)
+        # Read in the single file 
+        elif os.path.isfile(args.phish_csv): 
+            phish_df=read_phish(args.phish_csv)
+        else: 
+            print('Invalid input, a file or directory is required.')
+            return  
     else: 
-        print('Invalid input, a file or directory is required.')
-        return  
+        print('Invalid input for either API or CSV')
+        return 
 
     # Print out the credentials in scope 
     if (args.scope): 
@@ -307,6 +352,7 @@ def read_phish(input_phish):
     df = pd.DataFrame(list(zip(row_email,row_time,row_message,row_details)),columns =['email','time', 'message','details'])
     df['details'].replace('', np.nan, inplace=True)
     return df
+
 
 def return_in_scope(input_df,input_ip_list):
     """
