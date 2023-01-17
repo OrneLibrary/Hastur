@@ -16,16 +16,14 @@ def main():
     parser = argparse.ArgumentParser(description='hastur - pull information from GoPhish and request stats or beautify output')
     parser.add_argument("-scope", help='specify the location of text file with IPs in scope',metavar='abs_path')
 
-
     """
     Create Subparsers for CSV and API
     """
     subparser=parser.add_subparsers(title='INPUT METHODS',dest='input_arguments',metavar='method [options ..]')
-    csvparser=subparser.add_parser('csv',help='pull information from csv file',description='csvparser - a method to analyze the output of the GoPhish through csv')
-    apiparser=subparser.add_parser('api',help='pull information directly via API',description='apiparser - a method to analyze the output of the GoPhish through the API')
+    csvparser=subparser.add_parser('csv',help='pull information from raw data csv file',description='csvparser - a method to analyze the output of the GoPhish through csv')
+    apiparser=subparser.add_parser('api',help='pull information directly via GoPhish API',description='apiparser - a method to analyze the output of the GoPhish through the API')
 
     csvparser.add_argument('phish_csv', action='store', help='specify the location of the csv dump from GoPhish, can be single file or directory',metavar='phish_dump')
-    
     apiparser.add_argument('server',action='store',help='specify GoPhish server',metavar='url')
     apiparser.add_argument('api_key', action='store', help='specify the API key for GoPhish',metavar='api_key')
     apiparser.add_argument('campaign_id', action='store', help='specify the campaign ID from GoPhish',metavar='campaign_id')
